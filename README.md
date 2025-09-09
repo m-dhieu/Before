@@ -35,7 +35,7 @@ The system ingests SMS data in XML format, performs data cleaning and categoriza
 MoMo_Enterprise/
 ├── README.md                         # Setup, run, overview
 ├── CONTRIBUTING.md                   # PRs, branching, and issues guide
-├── create_environment.sh             # Script to set up the application environment
+├── setup_project.sh                  # Script to set up the application environment
 ├── .gitignore                        # Files that Git should ignore
 ├── .env                              # DATABASE_URL or path to SQLite
 ├── requirements.txt                  # lxml/ElementTree, dateutil, FastAPI
