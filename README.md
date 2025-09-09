@@ -80,7 +80,7 @@ MoMo_Enterprise/
 ---
 
 ## Architecture
-The system follows a modular design using [draw.io](https://app.diagrams.net/):  
+The system follows a modular design using [draw.io](https://app.diagrams.net/) tool:  
 - **Data Ingestion:** SMS XML input loaded into ETL pipeline  
 - **Processing:** parsing, cleaning, normalization, categorization  
 - **Persistence:** relational database + caching layer  
@@ -101,9 +101,9 @@ Tasks cover ETL modules, database integration, frontend dashboard, and CI/CD aut
 ---
 
 ## Team
-Name: [Team 1]
+Name: Team 1
 
-Members (with their GitHub links and team roles):
+Members:
 - **Monica Dhieu** [Github](https://github.com/m-dhieu) – Backend & ETL Pipeline Lead
 - **Janviere Munezero** [Github](https://github.com/Janviere-dev) – Database & API Integration
 - **Thierry Gabin** [Github](https://github.com/tgabin1) – Frontend & Data Visualization
