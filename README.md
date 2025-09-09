@@ -96,7 +96,7 @@ We follow Agile Scrum workflows using a shared Jira Scrum board.
 Columns include: To Do, In Progress, Done.  
 Tasks cover ETL modules, database integration, frontend dashboard, and CI/CD automation.
 
-[View Scrum Board](https://alustudent-team1.atlassian.net/jira/software/projects/MSPE/boards/34?atlOrigin=eyJpIjoiNmU4MGM3NzQ5MTVjNGIwNWI3OTExNGJhMjI0MGY5ODAiLCJwIjoiaiJ9)
+[View Scrum Board](https://alustudent-team1.atlassian.net/jira/software/projects/MSPE/boards/34?atlOrigin=eyJpIjoiYjg2ZjViOGNhM2FhNDUzNmFhZDg1MzA5OTdlOGU3ZmMiLCJwIjoiaiJ9)
 
 ---
 
