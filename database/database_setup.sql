@@ -1,6 +1,7 @@
 --------------------------------------------------------------------------------
 -- Script Name: database_setup.sql
--- Description: Creates and documents the MTN Mobile Money transaction database schema. Includes table creation, constraints, comments, indexes, and sample data.
+-- Description: Creates and documents the MTN Mobile Money transaction database schema. 
+--              Includes table creation, constraints, comments, indexes, and sample data.
 -- Author: Thierry Gabin, Santhiana Kaze, & Janviere Munezero
 -- Date:   2025-09-15
 -- Usage:  Executed by a DBMS
