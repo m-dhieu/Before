@@ -2,8 +2,8 @@
 -- Script Name: database_setup.sql
 -- Description: Creates and documents the MTN Mobile Money transaction database schema. 
 --              Includes table creation, constraints, comments, indexes, and sample data.
--- Author: Thierry Gabin, Santhiana Kaze, & Janviere Munezero
--- Date:   2025-09-15
+-- Author: Thierry Gabin & Janviere Munezero
+-- Date:   2025-09-18
 -- Usage:  Executed by a DBMS
 --------------------------------------------------------------------------------
 
@@ -75,11 +75,11 @@ CREATE TABLE Promotion (
 
 -- Insert sample data into User
 INSERT INTO User (PhoneNumber, Name, UserType) VALUES
-('+256700123456', 'Jane Smith', 'sender'),
-('+256701234567', 'Samuel Carter', 'receiver'),
-('+256702345678', 'Alice Johnson', 'agent'),
-('+256703456789', 'Michael Brown', 'sender'),
-('+256704567890', 'Emily Davis', 'receiver');
+('+250700123456', 'Jane Smith', 'sender'),
+('+250701234567', 'Samuel Carter', 'receiver'),
+('+250702345678', 'Alice Johnson', 'agent'),
+('+250703456789', 'Michael Brown', 'sender'),
+('+250704567890', 'Emily Davis', 'receiver');
 
 -- Insert sample data into TransactionCategory
 INSERT INTO TransactionCategory (CategoryName, Description) VALUES
@@ -91,11 +91,11 @@ INSERT INTO TransactionCategory (CategoryName, Description) VALUES
 
 -- Insert sample data into Transaction
 INSERT INTO Transaction (TransactionType, Amount, Currency, DateTime, ReferenceNumber, BalanceAfterTransaction, Status, MessageText, CategoryID) VALUES
-('deposit', 100000.00, 'UGX', '2025-09-10 14:30:00', 'REF12345', 150000.00, 'confirmed', 'Deposit of 100000 UGX successful', 1),
-('payment', 50000.00, 'UGX', '2025-09-11 09:15:00', 'PAY54321', 100000.00, 'confirmed', 'Payment of 50000 UGX to merchant', 2),
-('transfer', 20000.00, 'UGX', '2025-09-12 16:45:00', 'TRF67890', 80000.00, 'confirmed', 'Transferred 20000 UGX to +256701234567', 3),
-('withdrawal', 30000.00, 'UGX', '2025-09-13 11:00:00', 'WDL11223', 50000.00, 'pending', 'Withdrawal request of 30000 UGX', 4),
-('fee', 1000.00, 'UGX', '2025-09-14 08:00:00', NULL, 49000.00, 'confirmed', 'Transaction fee charged: 1000 UGX', 5);
+('deposit', 100000.00, 'RWF', '2025-09-10 14:30:00', 'REF12345', 150000.00, 'confirmed', 'Deposit of 100000 RWF successful', 1),
+('payment', 50000.00, 'RWF', '2025-09-11 09:15:00', 'PAY54321', 100000.00, 'confirmed', 'Payment of 50000 RWF to merchant', 2),
+('transfer', 20000.00, 'RWF', '2025-09-12 16:45:00', 'TRF67890', 80000.00, 'confirmed', 'Transferred 20000 RWF to +256701234567', 3),
+('withdrawal', 30000.00, 'RWF', '2025-09-13 11:00:00', 'WDL11223', 50000.00, 'pending', 'Withdrawal request of 30000 RWF', 4),
+('fee', 1000.00, 'RWF', '2025-09-14 08:00:00', NULL, 49000.00, 'confirmed', 'Transaction fee charged: 1000 RWF', 5);
 
 -- Insert sample data into TransactionParticipant
 INSERT INTO TransactionParticipant (TransactionID, UserID, Role) VALUES
@@ -122,5 +122,5 @@ INSERT INTO Promotion (PromotionType, Message, ValidFrom, ValidTo) VALUES
 ('promotion', 'Double cashback on deposits', '2025-09-01', '2025-09-30'),
 ('security alert', 'Unauthorized login detected', '2025-09-12', '2025-09-18'),
 ('promotion', 'Fee waiver on first 3 transactions', '2025-09-05', '2025-09-20'),
-('promotion', 'Refer a friend and earn 5000 UGX', '2025-09-10', '2025-10-10'),
+('promotion', 'Refer a friend and earn 5000 RWF', '2025-09-10', '2025-10-10'),
 ('security alert', 'Password change required', '2025-09-14', '2025-09-21');
