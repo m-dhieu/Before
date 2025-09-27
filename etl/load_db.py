@@ -21,7 +21,7 @@ DB_CONFIG = {
 }
 
 def connect_db():
-    """Connect to MySQL database"""
+    """Connects to MySQL database"""
     try:
         conn = mysql.connector.connect(**DB_CONFIG)
         print("Connected to MySQL database")
@@ -36,12 +36,12 @@ def connect_db():
         sys.exit(1)
 
 def load_json(json_path):
-    """Load transactions JSON file"""
+    """Loads transactions JSON file"""
     with open(json_path, 'r') as f:
         return json.load(f)
 
 def get_or_create_category(cursor, category_name):
-    """Fetch CategoryID or create if not exists"""
+    """Fetchees CategoryID or creates if not exists"""
     cursor.execute("SELECT CategoryID FROM TransactionCategory WHERE CategoryName = %s", (category_name,))
     result = cursor.fetchone()
     if result:
@@ -53,7 +53,7 @@ def get_or_create_category(cursor, category_name):
     return cursor.lastrowid
 
 def get_or_create_user(cursor, user):
-    """Fetch UserID or insert new user by PhoneNumber"""
+    """Fetches UserID or inserts new user by PhoneNumber"""
     cursor.execute("SELECT UserID FROM User WHERE PhoneNumber = %s", (user['PhoneNumber'],))
     result = cursor.fetchone()
     if result:
@@ -65,7 +65,7 @@ def get_or_create_user(cursor, user):
     return cursor.lastrowid
 
 def insert_transaction(cursor, transaction, category_id):
-    """Insert a transaction"""
+    """Inserts a transaction"""
     cursor.execute(
         """INSERT INTO Transaction 
         (TransactionType, Amount, Currency, DateTime, ReferenceNumber, BalanceAfterTransaction, Status, MessageText, CategoryID)
@@ -77,7 +77,7 @@ def insert_transaction(cursor, transaction, category_id):
     return cursor.lastrowid
 
 def insert_participants(cursor, transaction_id, participants):
-    """Insert transaction participants with role"""
+    """Inserts transaction participants with role"""
     for p in participants:
         user_id = get_or_create_user(cursor, p)
         cursor.execute(
