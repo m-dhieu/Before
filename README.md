@@ -116,12 +116,12 @@ The project uses a relational database (MySQL default; PostgreSQL supported) to 
 ## API Server
 
 * Located in `api/server.py`  
-* Supports CRUD for transactions with Basic Auth protection 
+* Supports CRUD for transactions with Basic Auth protection  
 * Returns JSON responses with proper HTTP status and error info
 
-## Data Structures & Algorithms (DSA) Comparison
+## DSA Comparison
 
-* Script at `dsa/compare_dsa_search.py` 
+* Script at `dsa/compare_dsa_search.py`  
 * Compares linear search vs dictionary lookup on transaction IDs  
 * Outputs timing and reflection on efficiencies
 
@@ -187,18 +187,24 @@ This project was developed and tested on:
 * Python 3.8 or newer  
 * Virtual environment (optional but encouraged)  
 * Bash or compatible command-line  
-* Git version control
+* Git version control  
+* MySQL Server installed and running  
+* Python MySQL connector: run `pip install mysql-connector-python`
 
 **Setup:**  
 * Clone the repo  
 * Run `setup_project.sh` to install dependencies  
 * Create `.env` for database connection strings if needed  
+* Create your MySQL database and initialize schema:
+
+```
+mysql -u your_user -p momo_db < database/database_setup.sql
+```
 
 **Current Functionalities:**  
-* Create database schemas with `database/database_setup.sql`
 * Parse raw XML data with `dsa/parse_xml.py`  
-* Load parsed transactions into JSON `data/processed/transactions.json`
-* Load parsed transactions into MySQL DB  
+* Load parsed transactions into JSON `data/processed/transactions.json`  
+* Load parsed transactions into MySQL DB via `etl/load_db.py`  
 * REST API on `api/server.py`  
 * DSA performance test in `dsa/compare_dsa_search.py`
 
@@ -221,4 +227,4 @@ Reach out to any listed team member for support, queries, or feedback.
 
 ---
 
-*Monday: September 29, 2025*
+*Monday, September 29, 2025*
