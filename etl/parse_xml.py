@@ -1,16 +1,19 @@
 #--------------------------------------------------------------------------------
 # Script Name: parse_xml.py
-# Description: Parses the modified_sms_v2.xml file in Python 
+# Description: Parses the modified_sms_v2.xml file in Python
 #              Converts SMS records into JSON objects (list of dictionaries)
+#              Saves the parsed JSON to a file for use in API
 # Author: Monica Dhieu
 # Date:   2025-09-27
-# Usage:  python3 parse_xml.py
+# Usage:  python3 parse_xml.py [input_xml_path] [output_json_path]
 #--------------------------------------------------------------------------------
 
 import xml.etree.ElementTree as ET
 from datetime import datetime
 import re
 import json
+import sys
+import os
 
 def parse_sms_date(ms_timestamp):
     """
@@ -21,7 +24,7 @@ def parse_sms_date(ms_timestamp):
 
 def extract_transaction_info(body):
     """
-    Parses SMS text and extract transaction details:
+    Parses SMS text and extracts transaction details:
     amount, currency, transaction type, datetime, reference ID,
     balance after transaction, status, and full message text.
     """
@@ -83,7 +86,12 @@ def load_transactions(file_path):
     """
     Parses the XML file and returns a list of transaction dicts for JSON serialization.
     """
-    tree = ET.parse(file_path)
+    try:
+        tree = ET.parse(file_path)
+    except (ET.ParseError, FileNotFoundError) as e:
+        print(f"Error reading XML file '{file_path}': {e}")
+        return []
+
     root = tree.getroot()
     user_id_map = {}
     user_counter = 1
@@ -127,73 +135,30 @@ def load_transactions(file_path):
 
     return transactions
 
-def generate_sql_inserts(transactions):
+def save_transactions_json(transactions, json_path):
     """
-    From a list of transaction dicts, generate SQL insert statements for Users, Transactions, and TransactionParticipants.
+    Saves the transactions list to a JSON file.
+    Creates directories if they don't exist.
     """
-    user_id_set = set()
-    sql_statements = []
+    try:
+        os.makedirs(os.path.dirname(json_path), exist_ok=True)
+        with open(json_path, 'w') as json_file:
+            json.dump(transactions, json_file, indent=4)
+        print(f"Transactions saved to JSON file: {json_path}")
+    except Exception as e:
+        print(f"Error saving JSON to {json_path}: {e}")
 
-    # Collect unique users from all transactions
-    for tx in transactions:
-        for p in tx['Participants']:
-            user_id_set.add((p['UserID'], p['Name'], p['PhoneNumber'], p['UserType']))
-
-    # Insert Users
-    sql_statements.append('-- Insert Users')
-    for uid, name, phone, utype in sorted(user_id_set, key=lambda x: x[0]):
-        sql_statements.append(
-            f"INSERT INTO User (UserID, Name, PhoneNumber, UserType) VALUES ({uid}, '{name.replace('\'','\'\'')}', '{phone}', '{utype}');"
-        )
-    sql_statements.append('')
-
-    # Insert Transactions
-    sql_statements.append('-- Insert Transactions')
-    for tx in transactions:
-        ref = tx['ReferenceNumber'] if tx['ReferenceNumber'] else 'NULL'
-        if ref != 'NULL':
-            ref = f"'{ref}'"
-        amt = tx['Amount'] if tx['Amount'] is not None else 0
-        curr = tx['Currency'] if tx['Currency'] else 'RWF'
-        dt = tx['DateTime'] if tx['DateTime'] else 'NULL'
-        if dt != 'NULL':
-            dt = f"'{dt}'"
-        balance = tx['BalanceAfterTransaction']
-        balance_str = str(balance) if balance is not None else 'NULL'
-        st = tx['Status'] if tx['Status'] else 'confirmed'
-        msg = tx['MessageText'].replace("'", "''") if tx['MessageText'] else ''
-        type_ = tx['TransactionType'] if tx['TransactionType'] else 'other'
-        sql_statements.append(
-            f"INSERT INTO Transaction (TransactionID, TransactionType, Amount, Currency, DateTime, ReferenceNumber, "
-            f"BalanceAfterTransaction, Status, MessageText, CategoryID) "
-            f"VALUES ({tx['TransactionID']}, '{type_}', {amt}, '{curr}', {dt}, {ref}, {balance_str}, '{st}', '{msg}', 1);"
-        )
-    sql_statements.append('')
-
-    # Insert Participants
-    sql_statements.append('-- Insert Transaction Participants')
-    participant_counter = 1
-    for tx in transactions:
-        for p in tx['Participants']:
-            sql_statements.append(
-                f"INSERT INTO TransactionParticipant (ParticipantID, TransactionID, UserID, Role) "
-                f"VALUES ({participant_counter}, {tx['TransactionID']}, {p['UserID']}, '{p['UserType']}');"
-            )
-            participant_counter += 1
-
-    return '\n'.join(sql_statements)
-
+# Main program flow
 if __name__ == '__main__':
-    # Load transactions from XML file
-    file_path = 'data/raw/modified_sms_v2.xml'
-    all_transactions = load_transactions(file_path)
+    input_xml_path = sys.argv[1] if len(sys.argv) > 1 else 'data/raw/modified_sms_v2.xml'
+    output_json_path = sys.argv[2] if len(sys.argv) > 2 else 'data/processed/transactions.json'
 
-    # Print JSON for API use or verification
-    json_output = json.dumps(all_transactions, indent=4)
-    print("Parsed JSON transactions:")
-    print(json_output)
+    print(f"Loading XML data from {input_xml_path} ...")
+    transactions = load_transactions(input_xml_path)
 
-    # Generate SQL for stored data
-    sql_script = generate_sql_inserts(all_transactions)
-    print("\nGenerated SQL Insert Statements:")
-    print(sql_script)
+    if transactions:
+        save_transactions_json(transactions, output_json_path)
+        print("Parsed transactions JSON preview:")
+        print(json.dumps(transactions[:3], indent=4))  # Show first 3 transactions
+    else:
+        print("No transactions parsed. Please check your XML file and path.")
