@@ -11,7 +11,7 @@ import json
 import time
 import random
 
-def load_transactions(json_path='data/processed/transactions.json'):
+def load_transactions(json_path='../data/processed/transactions.json'):
     # load transactions from JSON file & return list of transaction dictionaries
     with open(json_path, 'r') as f:
         return json.load(f)
