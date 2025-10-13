@@ -263,33 +263,6 @@ class TrainDataCleaner:
         self.log_step("Outlier detection completed")
         return self
     
-    # def detect_rare_categories(self):
-    #     categorical_cols = ['pickup_location', 'dropoff_location']
-    #     rare_info = {}
-    
-    #     for col in categorical_cols:
-    #         # Count frequencies of each category
-    #         frequency = self.df[col].value_counts(normalize=True)
-            
-    #         # Define threshold for rarity, e.g., less than 1% of total
-    #         rare_threshold = 0.01
-            
-    #         # Find rare categories below threshold
-    #         rare_categories = frequency[frequency < rare_threshold]
-            
-    #         rare_info[col] = rare_categories
-            
-    #         print(f"\nRare categories in {col}:")
-    #         if not rare_categories.empty:
-    #             print(rare_categories)
-    #         else:
-    #             print("No rare categories found")
-        
-    #     self.rare_info = rare_info
-    #     self.log_step("Rare category detection for pickup and dropoff locations completed")
-    #     return self
-
-    
     def handle_outliers(self, method='cap'):
         # Handle outliers using specified method
         print(f"\nHANDLING OUTLIERS (Method: {method.upper()})")
@@ -651,9 +624,7 @@ def main():
          .check_duplicates()
          .remove_duplicates()
          .validate_data_integrity()
-         .detect_outliers()
-        #  .detect_rare_categories()
-         .handle_outliers(method='cap')
+         .detect_outliers()         .handle_outliers(method='cap')
          .normalize_data()
          .create_derived_features()
          .validate_derived_features()
