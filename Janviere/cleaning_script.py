@@ -16,6 +16,7 @@ import numpy as np       # this one too will has numerical operation will also h
 from datetime import datetime  # this will deal with date and time, this also can be essential in cleaning and transforming date columns   
 import warnings           #during data operation this can help in controlling warning messages 
 import math               # offers mathematical operations 
+import os                 # file system operations for saving outputs
 
 
 class TrainDataCleaner:
@@ -24,6 +25,11 @@ class TrainDataCleaner:
         self.df = None
         self.original_shape = None
         self.cleaning_log = []
+        self.invalid_records = None
+        self.capped_records = None
+        self.removed_missing_records = None
+        self.removed_exact_duplicates = None
+        self.removed_id_duplicates = None
 
     def load_data(self):
         # Loads the dataset
@@ -77,6 +83,11 @@ class TrainDataCleaner:
         initial_rows = len(self.df)
         
         # Remove rows with any missing values (since all columns are important for train trips)
+        try:
+            missing_mask = self.df.isnull().any(axis=1)
+            self.removed_missing_records = self.df[missing_mask].copy()
+        except Exception:
+            self.removed_missing_records = None
         self.df = self.df.dropna()
         
         rows_removed = initial_rows - len(self.df)
@@ -114,11 +125,21 @@ class TrainDataCleaner:
         initial_rows = len(self.df)
         
         # Remove exact duplicates
+        try:
+            exact_removed_mask = self.df.duplicated(keep='first')
+            self.removed_exact_duplicates = self.df[exact_removed_mask].copy()
+        except Exception:
+            self.removed_exact_duplicates = None
         self.df = self.df.drop_duplicates()
         exact_removed = initial_rows - len(self.df)
         
         # Remove duplicate IDs (keep first occurrence)
         initial_rows = len(self.df)
+        try:
+            id_removed_mask = self.df.duplicated(subset=['id'], keep='first')
+            self.removed_id_duplicates = self.df[id_removed_mask].copy()
+        except Exception:
+            self.removed_id_duplicates = None
         self.df = self.df.drop_duplicates(subset=['id'])
         id_removed = initial_rows - len(self.df)
         
@@ -185,6 +206,12 @@ class TrainDataCleaner:
         invalid_rows = (invalid_duration | invalid_time_order | invalid_passengers | 
                        invalid_coords | zero_coords)
         
+        # Store invalid rows for transparency before removal
+        try:
+            self.invalid_records = self.df[invalid_rows].copy()
+        except Exception:
+            self.invalid_records = None
+
         self.df = self.df[~invalid_rows]
         rows_removed = initial_rows - len(self.df)
         
@@ -288,6 +315,22 @@ class TrainDataCleaner:
             original_min = self.df['trip_duration'].min()
             original_max = self.df['trip_duration'].max()
             
+            # Record rows that will be capped for transparency
+            try:
+                original_td = self.df['trip_duration'].copy()
+                capped_low_mask = original_td < Q1
+                capped_high_mask = original_td > Q99
+                capped_mask = capped_low_mask | capped_high_mask
+                if capped_mask.any():
+                    capped_df = self.df.loc[capped_mask, :].copy()
+                    capped_df['trip_duration_original'] = original_td.loc[capped_mask]
+                    capped_df['trip_duration_capped'] = np.clip(original_td.loc[capped_mask], Q1, Q99)
+                    self.capped_records = capped_df
+                else:
+                    self.capped_records = None
+            except Exception:
+                self.capped_records = None
+
             self.df['trip_duration'] = np.clip(self.df['trip_duration'], Q1, Q99)
             
             self.log_step(f"Capped trip_duration values to range [{Q1:.0f}, {Q99:.0f}] seconds")
@@ -401,9 +444,30 @@ class TrainDataCleaner:
             labels=['Very Slow (0-10km/h)', 'Slow (10-20km/h)', 'Normal (20-30km/h)', 
                    'Fast (30-50km/h)', 'Very Fast (50km/h+)']
         )
+
+        # 8. Fare-based features (if fare data is available)
+        if 'fare_amount' in self.df.columns:
+            print("Creating fare-based features...")
+            # Avoid division by zero when distance or duration is zero
+            self.df['fare_per_km'] = np.where(
+                self.df['trip_distance_km'] > 0,
+                self.df['fare_amount'] / self.df['trip_distance_km'],
+                np.nan
+            )
+            self.df['fare_per_min'] = np.where(
+                self.df['trip_duration'] > 0,
+                self.df['fare_amount'] / (self.df['trip_duration'] / 60.0),
+                np.nan
+            )
+            if 'tip_amount' in self.df.columns:
+                self.df['tip_percentage'] = np.where(
+                    self.df['fare_amount'] > 0,
+                    (self.df['tip_amount'] / self.df['fare_amount']) * 100.0,
+                    np.nan
+                )
         
         # Log feature creation
-        self.log_step("Created 7 derived features:")
+        self.log_step("Created derived features:")
         self.log_step("  - trip_distance_km: Haversine distance between pickup and dropoff")
         self.log_step("  - trip_speed_kmh: Average speed during trip")
         self.log_step("  - trip_efficiency: Distance covered per minute")
@@ -412,6 +476,11 @@ class TrainDataCleaner:
         self.log_step("  - trip_duration_category: Categorical trip duration")
         self.log_step("  - distance_category: Categorical trip distance")
         self.log_step("  - speed_category: Categorical trip speed")
+        if 'fare_amount' in self.df.columns:
+            self.log_step("  - fare_per_km: Fare normalized by distance")
+            self.log_step("  - fare_per_min: Fare normalized by minutes")
+            if 'tip_amount' in self.df.columns:
+                self.log_step("  - tip_percentage: Tip as percentage of fare")
         
         return self
     
@@ -481,6 +550,10 @@ class TrainDataCleaner:
         # Save cleaned dataset
         print("\nSAVING CLEANED DATA")
         
+        # Ensure output directory exists
+        output_dir = os.path.dirname(output_path) if os.path.dirname(output_path) else '.'
+        os.makedirs(output_dir, exist_ok=True)
+
         self.df.to_csv(output_path, index=False)
         
         print(f"Cleaned dataset saved to: {output_path}")
@@ -490,7 +563,61 @@ class TrainDataCleaner:
         print(f"Reduction: {((self.original_shape[0] - self.df.shape[0]) / self.original_shape[0] * 100):.2f}%")
         
         self.log_step(f"Cleaned data saved: {self.df.shape[0]} rows remaining")
+        
+        # Save transparency logs alongside cleaned data
+        self.save_transparency_logs(output_dir)
         return self
+
+    def save_transparency_logs(self, output_dir):
+        # Save logs for excluded or suspicious records
+        try:
+            if self.invalid_records is not None and len(self.invalid_records) > 0:
+                invalid_path = os.path.join(output_dir, 'excluded_invalid_records.csv')
+                self.invalid_records.to_csv(invalid_path, index=False)
+                self.log_step(f"Saved invalid/excluded records to: {invalid_path}")
+        except Exception as e:
+            print(f"Failed to save invalid records log: {e}")
+
+        try:
+            if self.capped_records is not None and len(self.capped_records) > 0:
+                capped_path = os.path.join(output_dir, 'capped_trip_durations.csv')
+                self.capped_records.to_csv(capped_path, index=False)
+                self.log_step(f"Saved capped outlier records to: {capped_path}")
+        except Exception as e:
+            print(f"Failed to save capped records log: {e}")
+
+        try:
+            if self.removed_missing_records is not None and len(self.removed_missing_records) > 0:
+                missing_path = os.path.join(output_dir, 'removed_missing_rows.csv')
+                self.removed_missing_records.to_csv(missing_path, index=False)
+                self.log_step(f"Saved removed rows with missing values to: {missing_path}")
+        except Exception as e:
+            print(f"Failed to save missing rows log: {e}")
+
+        try:
+            if self.removed_exact_duplicates is not None and len(self.removed_exact_duplicates) > 0:
+                exact_dups_path = os.path.join(output_dir, 'removed_exact_duplicates.csv')
+                self.removed_exact_duplicates.to_csv(exact_dups_path, index=False)
+                self.log_step(f"Saved removed exact duplicates to: {exact_dups_path}")
+        except Exception as e:
+            print(f"Failed to save exact duplicates log: {e}")
+
+        try:
+            if self.removed_id_duplicates is not None and len(self.removed_id_duplicates) > 0:
+                id_dups_path = os.path.join(output_dir, 'removed_id_duplicates.csv')
+                self.removed_id_duplicates.to_csv(id_dups_path, index=False)
+                self.log_step(f"Saved removed duplicate IDs to: {id_dups_path}")
+        except Exception as e:
+            print(f"Failed to save id duplicates log: {e}")
+
+        try:
+            if hasattr(self, 'outlier_info') and isinstance(self.outlier_info, dict) and len(self.outlier_info) > 0:
+                bounds_df = pd.DataFrame.from_dict(self.outlier_info, orient='index')
+                bounds_df_path = os.path.join(output_dir, 'outlier_bounds.csv')
+                bounds_df.to_csv(bounds_df_path)
+                self.log_step(f"Saved outlier bounds to: {bounds_df_path}")
+        except Exception as e:
+            print(f"Failed to save outlier bounds log: {e}")
     
     def print_cleaning_summary(self):
         # Print summary of all cleaning steps
@@ -511,7 +638,10 @@ class TrainDataCleaner:
 
 
 def main():
-        cleaner = TrainDataCleaner("train.csv")
+        base_dir = os.path.dirname(__file__)
+        input_csv = os.path.join(base_dir, 'train.csv')
+        output_csv = os.path.join(base_dir, '..', 'processed', 'train_cleaned.csv')
+        cleaner = TrainDataCleaner(input_csv)
         (cleaner
          .load_data()
          .basic_info()
@@ -528,7 +658,7 @@ def main():
          .create_derived_features()
          .validate_derived_features()
          .create_summary_statistics()
-         .save_cleaned_data('train_cleaned.csv')
+         .save_cleaned_data(output_csv)
          .print_cleaning_summary()
         #  .log_step("Train dataset loaded successfully!")
          
