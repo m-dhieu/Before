@@ -6,7 +6,7 @@
 //              histograms, and pickup heatmaps. Also manages interactive sliders with custom  
 //              gradient colors for filtering data by distance and fare.  
 // Author:      Thierry Gabin  
-// Date:        2025-10-15  
+// Date:        2025-10-16  
 // -----------------------------------------------------------------------------------------  
 
 document.addEventListener("DOMContentLoaded", function () {
